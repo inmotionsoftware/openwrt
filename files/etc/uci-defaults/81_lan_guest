@@ -6,7 +6,9 @@
 . /lib/functions/uci-defaults.sh
 
 # Get our mac address so that we can have unique Wifi SSID's
-inm_mac_addr=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g)
+#inm_mac_addr=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g)
+# changed to use random number for use in SSID naming
+device_id=$(head /dev/urandom | tr -dc "123456789" | head -c4)
 
 ###############################################################################
 #
@@ -66,7 +68,7 @@ set wireless.@wifi-iface[0]=wifi-iface
 set wireless.@wifi-iface[0].device='radio0'
 set wireless.@wifi-iface[0].network='lan'
 set wireless.@wifi-iface[0].mode='ap'
-set wireless.@wifi-iface[0].ssid='ReefAP-${inm_mac_addr}-2.4Ghz'
+set wireless.@wifi-iface[0].ssid='REEF-2.4G-${device_id}'
 set wireless.@wifi-iface[0].encryption='psk'
 set wireless.@wifi-iface[0].key='treehouse'
 EOF
@@ -77,7 +79,7 @@ set wireless.@wifi-iface[1]=wifi-iface
 set wireless.@wifi-iface[1].device='radio1'
 set wireless.@wifi-iface[1].network='lan'
 set wireless.@wifi-iface[1].mode='ap'
-set wireless.@wifi-iface[1].ssid='ReefAP-${inm_mac_addr}-5.0Ghz'
+set wireless.@wifi-iface[1].ssid='REEF-5G-${device_id}'
 set wireless.@wifi-iface[1].encryption='psk'
 set wireless.@wifi-iface[1].key='treehouse'
 EOF
@@ -88,7 +90,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio0'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='ReefAP-${inm_mac_addr}-2.4Ghz-Guest'
+set wireless.@wifi-iface[-1].ssid='REEF-2.4G-Guest-${device_id}'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
@@ -99,7 +101,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio1'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='ReefAP-${inm_mac_addr}-5.0Ghz-Guest'
+set wireless.@wifi-iface[-1].ssid='REEF-5G-Guest-${device_id}'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
