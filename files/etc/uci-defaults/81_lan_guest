@@ -1,0 +1,197 @@
+#!/bin/sh
+#
+# Copyright (C) 2015 InMotion Software
+#
+
+. /lib/functions/uci-defaults.sh
+
+# Get our mac address so that we can have unique Wifi SSID's
+inm_mac_addr=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g)
+
+###############################################################################
+#
+# inm_ucidef_lan_guest_set_network()
+#
+# Creates the "lan_guest" network interface.
+#
+###############################################################################
+inm_ucidef_lan_guest_set_network() {
+
+# Create the "lan_guest" interface.
+uci batch <<EOF
+set network.lan_guest='interface'
+set network.lan_guest.type='bridge'
+set network.lan_guest.proto='static'
+set network.lan_guest.ipaddr='192.168.8.1'
+set network.lan_guest.netmask='255.255.252.0'
+EOF
+
+uci commit network
+}
+
+
+###############################################################################
+#
+# inm_ucidef_lan_guest_set_dhcp()
+#
+# Creates the "lan_guest" dhcp.
+#
+###############################################################################
+inm_ucidef_lan_guest_set_dhcp() {
+
+uci batch <<EOF
+set dhcp.lan_guest='dhcp'
+set dhcp.lan_guest.start='100'
+set dhcp.lan_guest.leasetime='12h'
+set dhcp.lan_guest.limit='350'
+set dhcp.lan_guest.interface='lan_guest'
+EOF
+
+uci commit dhcp
+}
+
+
+###############################################################################
+#
+# inm_ucidef_lan_guest_set_wireless()
+#
+# Creates the "lan_guest" wireless interfaces.
+#
+###############################################################################
+inm_ucidef_lan_guest_set_wireless() {
+
+# radio0 - lan
+uci batch <<EOF
+set wireless.@wifi-iface[0]=wifi-iface
+set wireless.@wifi-iface[0].device='radio0'
+set wireless.@wifi-iface[0].network='lan'
+set wireless.@wifi-iface[0].mode='ap'
+set wireless.@wifi-iface[0].ssid='ReefAP-${inm_mac_addr}-2.4Ghz'
+set wireless.@wifi-iface[0].encryption='psk'
+set wireless.@wifi-iface[0].key='treehouse'
+EOF
+
+# radio1 - lan
+uci batch <<EOF
+set wireless.@wifi-iface[1]=wifi-iface
+set wireless.@wifi-iface[1].device='radio1'
+set wireless.@wifi-iface[1].network='lan'
+set wireless.@wifi-iface[1].mode='ap'
+set wireless.@wifi-iface[1].ssid='ReefAP-${inm_mac_addr}-5.0Ghz'
+set wireless.@wifi-iface[1].encryption='psk'
+set wireless.@wifi-iface[1].key='treehouse'
+EOF
+
+# radio0 - lan_guest
+uci batch <<EOF
+add wireless wifi-iface
+set wireless.@wifi-iface[-1].device='radio0'
+set wireless.@wifi-iface[-1].network='lan_guest'
+set wireless.@wifi-iface[-1].mode='ap'
+set wireless.@wifi-iface[-1].ssid='ReefAP-${inm_mac_addr}-2.4Ghz-Guest'
+set wireless.@wifi-iface[-1].encryption='psk'
+set wireless.@wifi-iface[-1].key='treehouse'
+EOF
+
+# radio - lan_guest
+uci batch <<EOF
+add wireless wifi-iface
+set wireless.@wifi-iface[-1].device='radio1'
+set wireless.@wifi-iface[-1].network='lan_guest'
+set wireless.@wifi-iface[-1].mode='ap'
+set wireless.@wifi-iface[-1].ssid='ReefAP-${inm_mac_addr}-5.0Ghz-Guest'
+set wireless.@wifi-iface[-1].encryption='psk'
+set wireless.@wifi-iface[-1].key='treehouse'
+EOF
+
+uci commit wireless
+}
+
+
+###############################################################################
+#
+# inm_ucidef_lan_guest_set_firewall()
+#
+# Creates the "lan_guest" firewall rules.
+#
+###############################################################################
+inm_ucidef_lan_guest_set_firewall() {
+
+# Create the lan_guest zone
+uci batch <<EOF
+delete firewall.zone_languest
+set firewall.zone_languest=zone
+set firewall.zone_languest.name='languest'
+set firewall.zone_languest.input='ACCEPT'
+set firewall.zone_languest.forward='REJECT'
+set firewall.zone_languest.output='ACCEPT'
+set firewall.zone_languest.network='lan_guest'
+EOF
+
+# Forward things from lan_guest to wan
+uci batch <<EOF
+delete firewall.forwarding_languest_wan
+set firewall.forwarding_languest_wan=forwarding
+set firewall.forwarding_languest_wan.src='lan_guest'
+set firewall.forwarding_languest_wan.dest='wan'
+EOF
+
+# Allow DNS on lan_guest
+uci batch <<EOF
+delete firewall.rule_languest_dns_accept
+set firewall.rule_languest_dns_accept=rule
+set firewall.rule_languest_dns_accept.name='languest: dns accept'
+set firewall.rule_languest_dns_accept.enabled='1'
+set firewall.rule_languest_dns_accept.src='lan_guest'
+set firewall.rule_languest_dns_accept.dest_port='53'
+set firewall.rule_languest_dns_accept.proto='tcp udp'
+set firewall.rule_languest_dns_accept.target='ACCEPT'
+EOF
+
+# Allow DHCP on lan_guest
+uci batch <<EOF
+delete firewall.rule_languest_dhcp_accept
+set firewall.rule_languest_dhcp_accept=rule
+set firewall.rule_languest_dhcp_accept.name='languest: dhcp accept'
+set firewall.rule_languest_dhcp_accept.enabled='1'
+set firewall.rule_languest_dhcp_accept.src='lan_guest'
+set firewall.rule_languest_dhcp_accept.dest_port='67-68'
+set firewall.rule_languest_dhcp_accept.proto='udp'
+set firewall.rule_languest_dhcp_accept.target='ACCEPT'
+EOF
+
+# Allow DHCP on lan_guest
+uci batch <<EOF
+delete firewall.rule_languest_to_lan_all_drop
+set firewall.rule_languest_to_lan_all_drop=rule
+set firewall.rule_languest_to_lan_all_drop.name='languest: lan all drop'
+set firewall.rule_languest_to_lan_all_drop.enabled='1'
+set firewall.rule_languest_to_lan_all_drop.src='lan_guest'
+set firewall.rule_languest_to_lan_all_drop.dest='lan'
+set firewall.rule_languest_to_lan_all_drop.proto='all'
+set firewall.rule_languest_to_lan_all_drop.target='DROP'
+EOF
+
+uci commit firewall
+}
+
+
+
+
+###############################################################################
+#
+# Main entry point
+#
+###############################################################################
+
+# Change the default "lan" ip address
+uci set network.lan.ipaddr=192.168.4.1
+uci commit network
+
+# Create the "lan_guest" interface/wifi
+inm_ucidef_lan_guest_set_network
+inm_ucidef_lan_guest_set_dhcp
+inm_ucidef_lan_guest_set_wireless
+inm_ucidef_lan_guest_set_firewall
+
+exit 0

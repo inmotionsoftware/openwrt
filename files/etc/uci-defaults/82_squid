@@ -1,0 +1,256 @@
+#!/bin/sh
+#
+# Copyright (C) 2015 InMotion Software
+#
+
+. /lib/functions/uci-defaults.sh
+
+
+
+###############################################################################
+#
+# inm_ucidef_lan_guest_set_transparent_firewall()
+#
+# Creates the "lan" and "lan_guest" firewall rules.
+#
+###############################################################################
+inm_ucidef_squid_transparent_firewall() {
+
+uci batch <<EOF
+add firewall redirect
+set firewall.@redirect[-1].target='DNAT'
+set firewall.@redirect[-1].src='lan'
+set firewall.@redirect[-1].dest='lan'
+set firewall.@redirect[-1].proto='tcp'
+set firewall.@redirect[-1].src_dport='80'
+set firewall.@redirect[-1].dest_ip='192.168.4.1'
+set firewall.@redirect[-1].dest_port='3128'
+set firewall.@redirect[-1].name='Proxy: redir lan http'
+EOF
+
+uci batch <<EOF
+add firewall redirect
+set firewall.@redirect[-1].target='DNAT'
+set firewall.@redirect[-1].src='lan_guest'
+set firewall.@redirect[-1].dest='lan_guest'
+set firewall.@redirect[-1].proto='tcp'
+set firewall.@redirect[-1].src_dport='80'
+set firewall.@redirect[-1].dest_ip='192.168.8.1'
+set firewall.@redirect[-1].dest_port='3128'
+set firewall.@redirect[-1].name='Proxy: redir lan_guest http'
+EOF
+
+uci batch <<EOF
+add firewall redirect
+set firewall.@redirect[-1].target='DNAT'
+set firewall.@redirect[-1].src='lan'
+set firewall.@redirect[-1].dest='lan'
+set firewall.@redirect[-1].proto='tcp'
+set firewall.@redirect[-1].src_dport='443'
+set firewall.@redirect[-1].dest_ip='192.168.4.1'
+set firewall.@redirect[-1].dest_port='3129'
+set firewall.@redirect[-1].name='Proxy: redir lan https'
+EOF
+
+uci batch <<EOF
+add firewall redirect
+set firewall.@redirect[-1].target='DNAT'
+set firewall.@redirect[-1].src='lan_guest'
+set firewall.@redirect[-1].dest='lan_guest'
+set firewall.@redirect[-1].proto='tcp'
+set firewall.@redirect[-1].src_dport='443'
+set firewall.@redirect[-1].dest_ip='192.168.8.1'
+set firewall.@redirect[-1].dest_port='3129'
+set firewall.@redirect[-1].name='Proxy: redir lan_guest https'
+EOF
+
+uci commit firewall
+}
+
+
+###############################################################################
+#
+# inm_ucidef_squid_transparent_ssl()
+#
+# Creates the certs, ... for SSL support
+#
+###############################################################################
+inm_ucidef_squid_transparent_ssl() {
+
+#
+# Create the SSL Bump cert
+#
+TMP_DIR_PREV=$PWD
+cd /etc/squid
+mkdir ssl_cert
+#chown squid:squid
+chmod 700 ssl_cert
+cd ssl_cert
+# Create the Cert
+openssl req -new -newkey rsa:2048 -sha256 -days 365 -nodes -x509 -subj '/C=US/ST=Texas/L=Austin/CN=www.reef-eduction.com' -keyout myCA.pem -out myCA.pem
+# Create a DER-encoded certificate to import into users' browsers
+openssl x509 -in myCA.pem -outform DER -out myCA.der
+cd $TMP_DIR_PREV
+
+# Initialize the ssl_db
+/usr/lib/squid/ssl_crtd -s /mnt/squid_ssl_db -M 4MB -c
+chown -R nobody /mnt/squid_ssl_db
+
+}
+
+
+###############################################################################
+#
+# inm_ucidef_squid_nontransparent()
+#
+# Creates the HTTP server to serve up the proxy.pac file
+#
+###############################################################################
+inm_ucidef_squid_nontransparent() {
+
+# Create an alias so that clients can find the proxy wpad.dat file so that they can auto configure themselves
+uci batch <<EOF
+delete dhcp.domain_lan_wpad
+set dhcp.domain_lan_wpad=domain
+set dhcp.domain_lan_wpad.name='wpad'
+set dhcp.domain_lan_wpad.ip='192.168.4.1'
+EOF
+
+#uci batch <<EOF
+#delete dhcp.domain_languest_wpad
+#set dhcp.domain_languest_wpad=domain
+#set dhcp.domain_languest_wpad.name='wpad'
+#set dhcp.domain_languest_wpad.ip='192.168.8.1'
+#EOF
+
+uci commit dhcp
+
+# Create the DHCP options
+uci batch <<EOF
+set dhcp.lan.dhcp_option='252,http://reefaccess/wpad.dat'
+set dhcp.lan_guest.dhcp_option='252,http://reefaccess/wpad.dat'
+EOF
+uci commit dhcp
+
+
+# Link the proxy.pac to wpad.dat and wpad.da
+ln -s /www/proxy.pac /www/wpad.dat
+ln -s /www/proxy.pac /www/wpad.da
+
+ln -s /www_file_svr/proxy.pac /www_file_svr/wpad.dat
+ln -s /www_file_svr/proxy.pac /www_file_svr/wpad.da
+
+
+
+if [ 0 ] ; then
+
+# Move the normal web server to port 8080 and 8443
+uci batch <<EOF
+set uhttpd.main.listen_http='0.0.0.0:8080 [::]:8080'
+set uhttpd.main.listen_https='0.0.0.0:8443 [::]:8443'
+EOF
+
+# Create the web server that serves up the proxy.pac/wpad.dat file for automatic proxy configuration
+uci batch <<EOF
+set uhttpd.file_svr='uhttpd'
+set uhttpd.file_svr.listen_http='0.0.0.0:80 [::]:80'
+set uhttpd.file_svr.listen_https='0.0.0.0:443 [::]:443'
+set uhttpd.file_svr.redirect_https='0'
+set uhttpd.file_svr.home='/www_file_svr'
+set uhttpd.file_svr.rfc1918_filter='1'
+set uhttpd.file_svr.max_requests='3'
+set uhttpd.file_svr.max_connections='100'
+set uhttpd.file_svr.cert='/etc/uhttpd.crt'
+set uhttpd.file_svr.key='/etc/uhttpd.key'
+set uhttpd.file_svr.cgi_prefix='/cgi-bin'
+set uhttpd.file_svr.script_timeout='60'
+set uhttpd.file_svr.network_timeout='30'
+set uhttpd.file_svr.http_keepalive='20'
+set uhttpd.file_svr.tcp_keepalive='1'
+set uhttpd.file_svr.ubus_prefix='/ubus'
+EOF
+
+uci commit uhttpd
+
+else
+
+# Bind the main web server to 'lan'.  This will serve as the main luci webserver and serve up 
+# the proxy.pac/wpad.dat file for automatic proxy configuration
+uci batch <<EOF
+set uhttpd.main.listen_http='192.168.4.1:80'
+set uhttpd.main.listen_https='192.168.4.1:443'
+set uhttpd.main.redirect_https='0'
+EOF
+
+# Create the 'lan_guest' web server that serves up the proxy.pac/wpad.dat file 
+# for automatic proxy configuration
+uci batch <<EOF
+set uhttpd.file_svr='uhttpd'
+set uhttpd.file_svr.listen_http='192.168.8.1:80'
+set uhttpd.file_svr.listen_https='192.168.8.1:443'
+set uhttpd.file_svr.redirect_https='0'
+set uhttpd.file_svr.home='/www_file_svr'
+set uhttpd.file_svr.rfc1918_filter='1'
+set uhttpd.file_svr.max_requests='3'
+set uhttpd.file_svr.max_connections='100'
+set uhttpd.file_svr.cert='/etc/uhttpd.crt'
+set uhttpd.file_svr.key='/etc/uhttpd.key'
+set uhttpd.file_svr.cgi_prefix='/cgi-bin'
+set uhttpd.file_svr.script_timeout='60'
+set uhttpd.file_svr.network_timeout='30'
+set uhttpd.file_svr.http_keepalive='20'
+set uhttpd.file_svr.tcp_keepalive='1'
+set uhttpd.file_svr.ubus_prefix='/ubus'
+EOF
+
+uci commit uhttpd
+
+fi
+
+# Create firewall rules to block access to normal HTTP and HTTPS from lan or lan_guest to WAN
+uci batch <<EOF
+delete firewall.rule_lan_to_wan_web
+set firewall.rule_lan_to_wan_web=rule
+set firewall.rule_lan_to_wan_web.src='lan'
+set firewall.rule_lan_to_wan_web.dest='wan'
+set firewall.rule_lan_to_wan_web.name='Proxy: lan to wan web reject'
+set firewall.rule_lan_to_wan_web.dest_port='80 443'
+set firewall.rule_lan_to_wan_web.target='REJECT'
+set firewall.rule_lan_to_wan_web.proto='tcp'
+EOF
+
+uci batch <<EOF
+delete firewall.rule_languest_to_wan_web
+set firewall.rule_languest_to_wan_web=rule
+set firewall.rule_languest_to_wan_web.src='lan_guest'
+set firewall.rule_languest_to_wan_web.dest='wan'
+set firewall.rule_languest_to_wan_web.name='Proxy: lan_guest to wan web reject'
+set firewall.rule_languest_to_wan_web.dest_port='80 443'
+set firewall.rule_languest_to_wan_web.target='REJECT'
+set firewall.rule_languest_to_wan_web.proto='tcp'
+EOF
+
+
+uci commit firewall
+}
+
+
+###############################################################################
+#
+# Main entry point
+#
+###############################################################################
+
+uci batch <<EOF
+set squid.squid.visible_hostname='reefaccess'
+EOF
+uci commit squid
+
+## Set the "squid" transparent proxy settings
+#inm_ucidef_squid_transparent_firewall
+#inm_ucidef_squid_transparent_ssl
+
+# Set the "squid" nontransparent proxy settings
+inm_ucidef_squid_nontransparent
+
+exit 0

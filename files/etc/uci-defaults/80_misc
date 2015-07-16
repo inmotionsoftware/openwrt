@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Copyright (C) 2015 InMotion Software
+#
+
+. /lib/functions/uci-defaults.sh
+
+
+uci batch <<EOF
+set system.@system[0].hostname='reefaccess'
+EOF
+uci commit system
+
+
+exit 0
