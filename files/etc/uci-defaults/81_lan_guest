@@ -68,7 +68,7 @@ set wireless.@wifi-iface[0]=wifi-iface
 set wireless.@wifi-iface[0].device='radio0'
 set wireless.@wifi-iface[0].network='lan'
 set wireless.@wifi-iface[0].mode='ap'
-set wireless.@wifi-iface[0].ssid='REEF-2.4G-${device_id}'
+set wireless.@wifi-iface[0].ssid='REEF-${device_id}-Instructor-Ch1'
 set wireless.@wifi-iface[0].encryption='psk'
 set wireless.@wifi-iface[0].key='treehouse'
 EOF
@@ -79,7 +79,7 @@ set wireless.@wifi-iface[1]=wifi-iface
 set wireless.@wifi-iface[1].device='radio1'
 set wireless.@wifi-iface[1].network='lan'
 set wireless.@wifi-iface[1].mode='ap'
-set wireless.@wifi-iface[1].ssid='REEF-5G-${device_id}'
+set wireless.@wifi-iface[1].ssid='REEF-${device_id}-Instructor-Ch2'
 set wireless.@wifi-iface[1].encryption='psk'
 set wireless.@wifi-iface[1].key='treehouse'
 EOF
@@ -90,7 +90,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio0'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='REEF-2.4G-Guest-${device_id}'
+set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Student-Ch1'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
@@ -101,7 +101,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio1'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='REEF-5G-Guest-${device_id}'
+set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Student-Ch2'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
