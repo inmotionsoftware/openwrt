@@ -6,38 +6,6 @@
 . /lib/functions/uci-defaults.sh
 
 
-
-###############################################################################
-#
-# inm_ucidef_squid_transparent_ssl()
-#
-# Creates the certs, ... for SSL support
-#
-###############################################################################
-inm_ucidef_squid_transparent_ssl() {
-
-#
-# Create the SSL Bump cert
-#
-TMP_DIR_PREV=$PWD
-cd /etc/squid
-mkdir ssl_cert
-#chown squid:squid
-chmod 700 ssl_cert
-cd ssl_cert
-# Create the Cert
-openssl req -new -newkey rsa:2048 -sha256 -days 365 -nodes -x509 -subj '/C=US/ST=Texas/L=Austin/CN=www.reef-eduction.com' -keyout myCA.pem -out myCA.pem
-# Create a DER-encoded certificate to import into users' browsers
-openssl x509 -in myCA.pem -outform DER -out myCA.der
-cd $TMP_DIR_PREV
-
-# Initialize the ssl_db
-/usr/lib/squid/ssl_crtd -s /mnt/squid_ssl_db -M 4MB -c
-chown -R nobody /mnt/squid_ssl_db
-
-}
-
-
 ###############################################################################
 #
 # inm_ucidef_squid_nontransparent()
