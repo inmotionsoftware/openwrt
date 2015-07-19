@@ -9,67 +9,6 @@
 
 ###############################################################################
 #
-# inm_ucidef_lan_guest_set_transparent_firewall()
-#
-# Creates the "lan" and "lan_guest" firewall rules.
-#
-###############################################################################
-inm_ucidef_squid_transparent_firewall() {
-
-uci batch <<EOF
-add firewall redirect
-set firewall.@redirect[-1].target='DNAT'
-set firewall.@redirect[-1].src='lan'
-set firewall.@redirect[-1].dest='lan'
-set firewall.@redirect[-1].proto='tcp'
-set firewall.@redirect[-1].src_dport='80'
-set firewall.@redirect[-1].dest_ip='192.168.4.1'
-set firewall.@redirect[-1].dest_port='3128'
-set firewall.@redirect[-1].name='Proxy: redir lan http'
-EOF
-
-uci batch <<EOF
-add firewall redirect
-set firewall.@redirect[-1].target='DNAT'
-set firewall.@redirect[-1].src='lan_guest'
-set firewall.@redirect[-1].dest='lan_guest'
-set firewall.@redirect[-1].proto='tcp'
-set firewall.@redirect[-1].src_dport='80'
-set firewall.@redirect[-1].dest_ip='192.168.8.1'
-set firewall.@redirect[-1].dest_port='3128'
-set firewall.@redirect[-1].name='Proxy: redir lan_guest http'
-EOF
-
-uci batch <<EOF
-add firewall redirect
-set firewall.@redirect[-1].target='DNAT'
-set firewall.@redirect[-1].src='lan'
-set firewall.@redirect[-1].dest='lan'
-set firewall.@redirect[-1].proto='tcp'
-set firewall.@redirect[-1].src_dport='443'
-set firewall.@redirect[-1].dest_ip='192.168.4.1'
-set firewall.@redirect[-1].dest_port='3129'
-set firewall.@redirect[-1].name='Proxy: redir lan https'
-EOF
-
-uci batch <<EOF
-add firewall redirect
-set firewall.@redirect[-1].target='DNAT'
-set firewall.@redirect[-1].src='lan_guest'
-set firewall.@redirect[-1].dest='lan_guest'
-set firewall.@redirect[-1].proto='tcp'
-set firewall.@redirect[-1].src_dport='443'
-set firewall.@redirect[-1].dest_ip='192.168.8.1'
-set firewall.@redirect[-1].dest_port='3129'
-set firewall.@redirect[-1].name='Proxy: redir lan_guest https'
-EOF
-
-uci commit firewall
-}
-
-
-###############################################################################
-#
 # inm_ucidef_squid_transparent_ssl()
 #
 # Creates the certs, ... for SSL support
