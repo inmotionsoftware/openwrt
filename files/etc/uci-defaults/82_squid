@@ -58,7 +58,6 @@ ln -s /www_file_svr/proxy.pac /www_file_svr/wpad.da
 
 #
 # Move the normal web server to port 8080 and 8443
-# and bind it to the 'lan' subnet only
 #
 uci batch <<EOF
 set uhttpd.main.listen_http='0.0.0.0:8080 [::]:8080'
