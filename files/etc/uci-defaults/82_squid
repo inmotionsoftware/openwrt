@@ -131,6 +131,41 @@ uci commit firewall
 
 
 #
+# WORKAROUND: Due to WebSockets not going through the proxy...
+# Create firewall rules to allow access to normal HTTP and HTTPS from lan or lan_guest to WAN
+# targeting .reef-education.com
+#
+# api-dev.reef-education.com    107.20.8.157
+# api-qa.reef-education.com     54.237.128.85
+# api-beta.reef-education.com   54.229.9.24
+# api.reef-education.com        54.72.117.52
+#
+uci batch <<EOF
+delete firewall.rule_lan_to_wan_web_reefeducationcom
+set firewall.rule_lan_to_wan_web_reefeducationcom=rule
+set firewall.rule_lan_to_wan_web_reefeducationcom.src='lan'
+set firewall.rule_lan_to_wan_web_reefeducationcom.dest='wan'
+set firewall.rule_lan_to_wan_web_reefeducationcom.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
+set firewall.rule_lan_to_wan_web_reefeducationcom.name='Proxy: lan to wan web .reef-education.com accept'
+set firewall.rule_lan_to_wan_web_reefeducationcom.dest_port='80 443'
+set firewall.rule_lan_to_wan_web_reefeducationcom.target='ACCEPT'
+set firewall.rule_lan_to_wan_web_reefeducationcom.proto='tcp'
+EOF
+
+uci batch <<EOF
+delete firewall.rule_languest_to_wan_web_reefeducationcom
+set firewall.rule_languest_to_wan_web_reefeducationcom=rule
+set firewall.rule_languest_to_wan_web_reefeducationcom.src='lan'
+set firewall.rule_languest_to_wan_web_reefeducationcom.dest='wan'
+set firewall.rule_languest_to_wan_web_reefeducationcom.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
+set firewall.rule_languest_to_wan_web_reefeducationcom.name='Proxy: lan_guest to wan web .reef-education.com accept'
+set firewall.rule_languest_to_wan_web_reefeducationcom.dest_port='80 443'
+set firewall.rule_languest_to_wan_web_reefeducationcom.target='ACCEPT'
+set firewall.rule_languest_to_wan_web_reefeducationcom.proto='tcp'
+EOF
+
+
+#
 # Create firewall rules to block access to normal HTTP and HTTPS from lan or lan_guest to WAN
 #
 uci batch <<EOF
@@ -170,10 +205,6 @@ uci batch <<EOF
 set squid.squid.visible_hostname='reefaccess'
 EOF
 uci commit squid
-
-## Set the "squid" transparent proxy settings
-#inm_ucidef_squid_transparent_firewall
-#inm_ucidef_squid_transparent_ssl
 
 # Set the "squid" nontransparent proxy settings
 inm_ucidef_squid_nontransparent
