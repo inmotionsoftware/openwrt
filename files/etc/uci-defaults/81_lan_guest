@@ -5,10 +5,10 @@
 
 . /lib/functions/uci-defaults.sh
 
-# Get our mac address so that we can have unique Wifi SSID's
-#inm_mac_addr=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g)
-# changed to use random number for use in SSID naming
-device_id=$(head /dev/urandom | tr -dc "123456789" | head -c4)
+# Use the last 3 bytes of the mac address for use in SSID naming
+device_id=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g | head -c -7)
+# Use random number for use in SSID naming
+#device_id=$(head /dev/urandom | tr -dc "123456789" | head -c4)
 
 ###############################################################################
 #
@@ -68,7 +68,7 @@ set wireless.@wifi-iface[0]=wifi-iface
 set wireless.@wifi-iface[0].device='radio0'
 set wireless.@wifi-iface[0].network='lan'
 set wireless.@wifi-iface[0].mode='ap'
-set wireless.@wifi-iface[0].ssid='REEF-${device_id}-Instructor-Ch1'
+set wireless.@wifi-iface[0].ssid='REEF-${device_id}-Instr-Ch1'
 set wireless.@wifi-iface[0].encryption='psk'
 set wireless.@wifi-iface[0].key='treehouse'
 EOF
@@ -79,7 +79,7 @@ set wireless.@wifi-iface[1]=wifi-iface
 set wireless.@wifi-iface[1].device='radio1'
 set wireless.@wifi-iface[1].network='lan'
 set wireless.@wifi-iface[1].mode='ap'
-set wireless.@wifi-iface[1].ssid='REEF-${device_id}-Instructor-Ch2'
+set wireless.@wifi-iface[1].ssid='REEF-${device_id}-Instr-Ch2'
 set wireless.@wifi-iface[1].encryption='psk'
 set wireless.@wifi-iface[1].key='treehouse'
 EOF
@@ -90,7 +90,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio0'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Student-Ch1'
+set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Stdnt-Ch1'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
@@ -101,7 +101,7 @@ add wireless wifi-iface
 set wireless.@wifi-iface[-1].device='radio1'
 set wireless.@wifi-iface[-1].network='lan_guest'
 set wireless.@wifi-iface[-1].mode='ap'
-set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Student-Ch2'
+set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Stdnt-Ch2'
 set wireless.@wifi-iface[-1].encryption='psk'
 set wireless.@wifi-iface[-1].key='treehouse'
 EOF
