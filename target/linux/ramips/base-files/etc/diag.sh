@@ -150,6 +150,9 @@ get_status_led() {
 	rut5xx)
 		status_led="rut5xx:green:status"
 		;;
+	sap-g3200u3)
+		status_led="storylink:green:usb"
+		;;
 	sl-r7205)
 		status_led="sl-r7205:green:status"
 		;;
@@ -248,6 +251,9 @@ get_status_led() {
 		;;
 	zte-q7)
 		status_led="zte:red:status"
+		;;
+	mzk-dp150n)
+		status_led="mzkdp150n:green:power"
 		;;
 	esac
 }

@@ -609,6 +609,8 @@ Image/Build/Profile/W502U=$(call BuildFirmware/Default8M/$(1),$(1),w502u,W502U)
 Image/Build/Profile/WCR150GN=$(call BuildFirmware/Default4M/$(1),$(1),wcr150gn,WCR150GN)
 
 
+Image/Build/Profile/MZK-DP150N=$(call BuildFirmware/Default4M/$(1),$(1),mzk-dp150n,MZK-DP150N)
+
 buffalo_whrg300n_mtd_size=3801088
 define BuildFirmware/WHRG300N/squashfs
 	$(call BuildFirmware/Default4M/$(1),$(1),whr-g300n,WHR-G300N)
@@ -772,6 +774,7 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/X5,$(1))
 	$(call Image/Build/Profile/X8,$(1))
 	$(call Image/Build/Profile/XDXRN502J,$(1))
+	$(call Image/Build/Profile/MZK-DP150N,$(1))
 
 endef
 endif
@@ -923,7 +926,7 @@ endif
 #
 
 ifeq ($(SUBTARGET),mt7621)
-  TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500
+  TARGET_DEVICES += mt7621 wsr-600 wsr-1166 dir-860l-b1 firewrt pbr-m1 re6500 sap-g3200u3
 endif
 
 define Device/mt7621
@@ -969,6 +972,10 @@ define Device/pbr-m1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
 endef
 
+define Device/sap-g3200u3
+  DTS := SAP-G3200U3
+endef
+
 #
 # MT7628 Profiles
 #
@@ -980,6 +987,20 @@ define Image/Build/Profile/Default
 	$(call Image/Build/Profile/MT7628,$(1))
 endef
 endif
+
+
+#
+# MT7688 Profiles
+#
+
+Image/Build/Profile/mt7688=$(call BuildFirmware/Default16M/$(1),$(1),mt7688,MT7688)
+
+ifeq ($(SUBTARGET),mt7688)
+define Image/Build/Profile/Default
+	$(call Image/Build/Profile/mt7688,$(1))
+endef
+endif
+
 
 ifndef TARGET_DEVICES
 #

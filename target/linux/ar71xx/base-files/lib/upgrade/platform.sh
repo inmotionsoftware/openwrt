@@ -179,6 +179,7 @@ platform_check_image() {
 	ap136-010 | \
 	ap136-020 | \
 	ap135-020 | \
+	ap147-010 | \
 	ap96 | \
 	bxu2000n-2-a1 | \
 	db120 | \
@@ -235,7 +236,6 @@ platform_check_image() {
 	nanostation-m-xw | \
 	rw2458n | \
 	wpj531 | \
-	wap4410n | \
 	wndap360 | \
 	wpj344 | \
 	wzr-hp-g300nh2 | \
@@ -313,6 +313,7 @@ platform_check_image() {
 	el-mini | \
 	gl-inet | \
 	mc-mac1200r | \
+	onion-omega | \
 	oolite | \
 	smart-300 | \
 	tl-mr10u | \
