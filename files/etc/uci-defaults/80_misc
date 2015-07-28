@@ -5,7 +5,7 @@
 
 . /lib/functions/uci-defaults.sh
 
-
+# Set the hostname for the gateway
 uci batch <<EOF
 set system.@system[0].hostname='reefaccess'
 EOF
