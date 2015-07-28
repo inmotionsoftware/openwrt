@@ -25,14 +25,6 @@ set dhcp.domain_lan_wpad=domain
 set dhcp.domain_lan_wpad.name='wpad'
 set dhcp.domain_lan_wpad.ip='192.168.4.1'
 EOF
-
-#uci batch <<EOF
-#delete dhcp.domain_languest_wpad
-#set dhcp.domain_languest_wpad=domain
-#set dhcp.domain_languest_wpad.name='wpad'
-#set dhcp.domain_languest_wpad.ip='192.168.8.1'
-#EOF
-
 uci commit dhcp
 
 
@@ -41,7 +33,7 @@ uci commit dhcp
 #
 uci batch <<EOF
 set dhcp.lan.dhcp_option='252,http://reefaccess/wpad.dat'
-set dhcp.lan_guest.dhcp_option='252,http://reefaccess/wpad.dat'
+set dhcp.languest.dhcp_option='252,http://reefaccess/wpad.dat'
 EOF
 uci commit dhcp
 
@@ -49,9 +41,6 @@ uci commit dhcp
 #
 # Link the proxy.pac to wpad.dat and wpad.da
 #
-ln -s /www/proxy.pac /www/wpad.dat
-ln -s /www/proxy.pac /www/wpad.da
-
 ln -s /www_file_svr/proxy.pac /www_file_svr/wpad.dat
 ln -s /www_file_svr/proxy.pac /www_file_svr/wpad.da
 
@@ -130,9 +119,31 @@ EOF
 uci commit firewall
 
 
+# Allow access to the proxy server from lan
+uci batch <<EOF
+delete firewall.rule_proxy_lan_accept
+set firewall.rule_proxy_lan_accept=rule
+set firewall.rule_proxy_lan_accept.name='Proxy: lan accept'
+set firewall.rule_proxy_lan_accept.src='lan'
+set firewall.rule_proxy_lan_accept.dest_port='3128'
+set firewall.rule_proxy_lan_accept.target='ACCEPT'
+set firewall.rule_proxy_lan_accept.proto='tcp'
+EOF
+
+# Allow access to the proxy server from languest
+uci batch <<EOF
+delete firewall.rule_proxy_languest_accept
+set firewall.rule_proxy_languest_accept=rule
+set firewall.rule_proxy_languest_accept.name='Proxy: languest accept'
+set firewall.rule_proxy_languest_accept.src='languest'
+set firewall.rule_proxy_languest_accept.dest_port='3128'
+set firewall.rule_proxy_languest_accept.target='ACCEPT'
+set firewall.rule_proxy_languest_accept.proto='tcp'
+EOF
+
 #
 # WORKAROUND: Due to WebSockets not going through the proxy...
-# Create firewall rules to allow access to normal HTTP and HTTPS from lan or lan_guest to WAN
+# Create firewall rules to allow access to normal HTTP and HTTPS from lan or languest to WAN
 # targeting .reef-education.com
 #
 # api-dev.reef-education.com    107.20.8.157
@@ -141,53 +152,53 @@ uci commit firewall
 # api.reef-education.com        54.72.117.52
 #
 uci batch <<EOF
-delete firewall.rule_lan_to_wan_web_reefeducationcom
-set firewall.rule_lan_to_wan_web_reefeducationcom=rule
-set firewall.rule_lan_to_wan_web_reefeducationcom.src='lan'
-set firewall.rule_lan_to_wan_web_reefeducationcom.dest='wan'
-set firewall.rule_lan_to_wan_web_reefeducationcom.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
-set firewall.rule_lan_to_wan_web_reefeducationcom.name='Proxy: lan to wan web .reef-education.com accept'
-set firewall.rule_lan_to_wan_web_reefeducationcom.dest_port='80 443'
-set firewall.rule_lan_to_wan_web_reefeducationcom.target='ACCEPT'
-set firewall.rule_lan_to_wan_web_reefeducationcom.proto='tcp'
+delete firewall.rule_proxy_lan_to_wan_web_reef
+set firewall.rule_proxy_lan_to_wan_web_reef=rule
+set firewall.rule_proxy_lan_to_wan_web_reef.src='lan'
+set firewall.rule_proxy_lan_to_wan_web_reef.dest='wan'
+set firewall.rule_proxy_lan_to_wan_web_reef.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
+set firewall.rule_proxy_lan_to_wan_web_reef.name='Proxy: lan to wan web .reef-education.com accept'
+set firewall.rule_proxy_lan_to_wan_web_reef.dest_port='80 443'
+set firewall.rule_proxy_lan_to_wan_web_reef.target='ACCEPT'
+set firewall.rule_proxy_lan_to_wan_web_reef.proto='tcp'
 EOF
 
 uci batch <<EOF
-delete firewall.rule_languest_to_wan_web_reefeducationcom
-set firewall.rule_languest_to_wan_web_reefeducationcom=rule
-set firewall.rule_languest_to_wan_web_reefeducationcom.src='lan'
-set firewall.rule_languest_to_wan_web_reefeducationcom.dest='wan'
-set firewall.rule_languest_to_wan_web_reefeducationcom.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
-set firewall.rule_languest_to_wan_web_reefeducationcom.name='Proxy: lan_guest to wan web .reef-education.com accept'
-set firewall.rule_languest_to_wan_web_reefeducationcom.dest_port='80 443'
-set firewall.rule_languest_to_wan_web_reefeducationcom.target='ACCEPT'
-set firewall.rule_languest_to_wan_web_reefeducationcom.proto='tcp'
+delete firewall.rule_proxy_languest_to_wan_web_reef
+set firewall.rule_proxy_languest_to_wan_web_reef=rule
+set firewall.rule_proxy_languest_to_wan_web_reef.src='languest'
+set firewall.rule_proxy_languest_to_wan_web_reef.dest='wan'
+set firewall.rule_proxy_languest_to_wan_web_reef.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
+set firewall.rule_proxy_languest_to_wan_web_reef.name='Proxy: languest to wan web .reef-education.com accept'
+set firewall.rule_proxy_languest_to_wan_web_reef.dest_port='80 443'
+set firewall.rule_proxy_languest_to_wan_web_reef.target='ACCEPT'
+set firewall.rule_proxy_languest_to_wan_web_reef.proto='tcp'
 EOF
 
 
 #
-# Create firewall rules to block access to normal HTTP and HTTPS from lan or lan_guest to WAN
+# Create firewall rules to block access to normal HTTP and HTTPS from lan or languest to WAN
 #
 uci batch <<EOF
-delete firewall.rule_lan_to_wan_web
-set firewall.rule_lan_to_wan_web=rule
-set firewall.rule_lan_to_wan_web.src='lan'
-set firewall.rule_lan_to_wan_web.dest='wan'
-set firewall.rule_lan_to_wan_web.name='Proxy: lan to wan web reject'
-set firewall.rule_lan_to_wan_web.dest_port='80 443'
-set firewall.rule_lan_to_wan_web.target='REJECT'
-set firewall.rule_lan_to_wan_web.proto='tcp'
+delete firewall.rule_proxy_lan_to_wan_web
+set firewall.rule_proxy_lan_to_wan_web=rule
+set firewall.rule_proxy_lan_to_wan_web.src='lan'
+set firewall.rule_proxy_lan_to_wan_web.dest='wan'
+set firewall.rule_proxy_lan_to_wan_web.name='Proxy: lan to wan web reject'
+set firewall.rule_proxy_lan_to_wan_web.dest_port='80 443'
+set firewall.rule_proxy_lan_to_wan_web.target='REJECT'
+set firewall.rule_proxy_lan_to_wan_web.proto='tcp'
 EOF
 
 uci batch <<EOF
-delete firewall.rule_languest_to_wan_web
-set firewall.rule_languest_to_wan_web=rule
-set firewall.rule_languest_to_wan_web.src='lan_guest'
-set firewall.rule_languest_to_wan_web.dest='wan'
-set firewall.rule_languest_to_wan_web.name='Proxy: lan_guest to wan web reject'
-set firewall.rule_languest_to_wan_web.dest_port='80 443'
-set firewall.rule_languest_to_wan_web.target='REJECT'
-set firewall.rule_languest_to_wan_web.proto='tcp'
+delete firewall.rule_proxy_languest_to_wan_web
+set firewall.rule_proxy_languest_to_wan_web=rule
+set firewall.rule_proxy_languest_to_wan_web.src='languest'
+set firewall.rule_proxy_languest_to_wan_web.dest='wan'
+set firewall.rule_proxy_languest_to_wan_web.name='Proxy: languest to wan web reject'
+set firewall.rule_proxy_languest_to_wan_web.dest_port='80 443'
+set firewall.rule_proxy_languest_to_wan_web.target='REJECT'
+set firewall.rule_proxy_languest_to_wan_web.proto='tcp'
 EOF
 
 
