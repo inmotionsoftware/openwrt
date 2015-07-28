@@ -162,7 +162,7 @@ set firewall.rule_languest_dhcp_accept.proto='udp'
 set firewall.rule_languest_dhcp_accept.target='ACCEPT'
 EOF
 
-# Allow DHCP on languest
+# Drop everything from languest to lan
 uci batch <<EOF
 delete firewall.rule_languest_to_lan_all_drop
 set firewall.rule_languest_to_lan_all_drop=rule
