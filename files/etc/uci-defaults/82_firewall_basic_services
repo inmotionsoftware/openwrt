@@ -1,0 +1,143 @@
+#!/bin/sh
+#
+# Copyright (C) 2015 InMotion Software
+#
+
+. /lib/functions/uci-defaults.sh
+
+
+###############################################################################
+#
+# inm_ucidef_firewall_basic_services()
+#
+# Creates the firewall rules.
+#
+###############################################################################
+inm_ucidef_firewall_basic_services() {
+local src=$1
+
+# Allow DNS
+uci batch <<EOF
+delete firewall.rule_${src}_dns_accept
+set firewall.rule_${src}_dns_accept=rule
+set firewall.rule_${src}_dns_accept.name='${src}: dns accept'
+set firewall.rule_${src}_dns_accept.enabled='1'
+set firewall.rule_${src}_dns_accept.src='${src}'
+set firewall.rule_${src}_dns_accept.dest_port='53'
+set firewall.rule_${src}_dns_accept.proto='tcp udp'
+set firewall.rule_${src}_dns_accept.target='ACCEPT'
+EOF
+
+# Allow DHCP
+uci batch <<EOF
+delete firewall.rule_${src}_dhcp_accept
+set firewall.rule_${src}_dhcp_accept=rule
+set firewall.rule_${src}_dhcp_accept.name='${src}: dhcp accept'
+set firewall.rule_${src}_dhcp_accept.enabled='1'
+set firewall.rule_${src}_dhcp_accept.src='${src}'
+set firewall.rule_${src}_dhcp_accept.dest_port='67-68'
+set firewall.rule_${src}_dhcp_accept.proto='udp'
+set firewall.rule_${src}_dhcp_accept.target='ACCEPT'
+EOF
+
+# Allow netbios udp
+uci batch <<EOF
+delete firewall.rule_${src}_netbios_udp_accept
+set firewall.rule_${src}_netbios_udp_accept=rule
+set firewall.rule_${src}_netbios_udp_accept.name='${src}: netbios udp accept'
+set firewall.rule_${src}_netbios_udp_accept.enabled='1'
+set firewall.rule_${src}_netbios_udp_accept.src='${src}'
+set firewall.rule_${src}_netbios_udp_accept.dest_port='137-138'
+set firewall.rule_${src}_netbios_udp_accept.proto='udp'
+set firewall.rule_${src}_netbios_udp_accept.target='ACCEPT'
+EOF
+
+# Allow netbios udp
+uci batch <<EOF
+delete firewall.rule_${src}_netbios_tcp_accept
+set firewall.rule_${src}_netbios_tcp_accept=rule
+set firewall.rule_${src}_netbios_tcp_accept.name='${src}: netbios tcp accept'
+set firewall.rule_${src}_netbios_tcp_accept.enabled='1'
+set firewall.rule_${src}_netbios_tcp_accept.src='${src}'
+set firewall.rule_${src}_netbios_tcp_accept.dest_port='139 445'
+set firewall.rule_${src}_netbios_tcp_accept.proto='udp'
+set firewall.rule_${src}_netbios_tcp_accept.target='ACCEPT'
+EOF
+
+uci batch <<EOF
+delete firewall.rule_${src}_icmp_ping_accept
+set firewall.rule_${src}_icmp_ping_accept=rule
+set firewall.rule_${src}_icmp_ping_accept.name='${src}: icmp ping accept'
+set firewall.rule_${src}_icmp_ping_accept.enabled='1'
+set firewall.rule_${src}_icmp_ping_accept.src='${src}'
+set firewall.rule_${src}_icmp_ping_accept.family='ipv4'
+set firewall.rule_${src}_icmp_ping_accept.proto='icmp'
+set firewall.rule_${src}_icmp_ping_accept.icmp_type='echo-request'
+set firewall.rule_${src}_icmp_ping_accept.target='ACCEPT'
+EOF
+
+uci commit firewall
+}
+
+
+###############################################################################
+#
+# inm_ucidef_firewall_admin_services()
+#
+# Creates the firewall rules.
+#
+###############################################################################
+inm_ucidef_firewall_admin_services() {
+local src=$1
+
+# Allow SSH
+uci batch <<EOF
+delete firewall.rule_${src}_ssh_accept
+set firewall.rule_${src}_ssh_accept=rule
+set firewall.rule_${src}_ssh_accept.name='${src}: ssh accept'
+set firewall.rule_${src}_ssh_accept.enabled='1'
+set firewall.rule_${src}_ssh_accept.src='${src}'
+set firewall.rule_${src}_ssh_accept.dest_port='22'
+set firewall.rule_${src}_ssh_accept.proto='tcp'
+set firewall.rule_${src}_ssh_accept.target='ACCEPT'
+EOF
+
+# Allow Telnet
+uci batch <<EOF
+delete firewall.rule_${src}_telnet_accept
+set firewall.rule_${src}_telnet_accept=rule
+set firewall.rule_${src}_telnet_accept.name='${src}: telnet accept'
+set firewall.rule_${src}_telnet_accept.enabled='1'
+set firewall.rule_${src}_telnet_accept.src='${src}'
+set firewall.rule_${src}_telnet_accept.dest_port='23'
+set firewall.rule_${src}_telnet_accept.proto='tcp'
+set firewall.rule_${src}_telnet_accept.target='ACCEPT'
+EOF
+
+uci commit firewall
+}
+
+
+
+
+###############################################################################
+#
+# Main entry point
+#
+###############################################################################
+
+# Change the lan and languest zone so that the default input is 'reject'
+uci batch <<EOF
+set firewall.@zone[0].input='REJECT'
+set firewall.zone_languest.input='REJECT'
+EOF
+uci commit firewall
+
+# Allow the basic services/ports
+inm_ucidef_firewall_basic_services lan
+inm_ucidef_firewall_basic_services languest
+
+# Allow the admin services/ports
+inm_ucidef_firewall_admin_services lan
+
+exit 0
