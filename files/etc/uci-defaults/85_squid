@@ -198,6 +198,31 @@ set firewall.rule_proxy_languest_to_wan_web.target='REJECT'
 set firewall.rule_proxy_languest_to_wan_web.proto='tcp'
 EOF
 
+#
+# Create firewall rules to block access to normal QUIC (Quick UDP Internet Connections) from lan or languest to WAN
+#
+uci batch <<EOF
+delete firewall.rule_proxy_lan_to_wan_quic
+set firewall.rule_proxy_lan_to_wan_quic=rule
+set firewall.rule_proxy_lan_to_wan_quic.src='lan'
+set firewall.rule_proxy_lan_to_wan_quic.dest='wan'
+set firewall.rule_proxy_lan_to_wan_quic.name='Proxy: lan to wan quic reject'
+set firewall.rule_proxy_lan_to_wan_quic.dest_port='443'
+set firewall.rule_proxy_lan_to_wan_quic.target='REJECT'
+set firewall.rule_proxy_lan_to_wan_quic.proto='udp'
+EOF
+
+uci batch <<EOF
+delete firewall.rule_proxy_languest_to_wan_quic
+set firewall.rule_proxy_languest_to_wan_quic=rule
+set firewall.rule_proxy_languest_to_wan_quic.src='languest'
+set firewall.rule_proxy_languest_to_wan_quic.dest='wan'
+set firewall.rule_proxy_languest_to_wan_quic.name='Proxy: languest to wan quic reject'
+set firewall.rule_proxy_languest_to_wan_quic.dest_port='443'
+set firewall.rule_proxy_languest_to_wan_quic.target='REJECT'
+set firewall.rule_proxy_languest_to_wan_quic.proto='udp'
+EOF
+
 
 uci commit firewall
 }
