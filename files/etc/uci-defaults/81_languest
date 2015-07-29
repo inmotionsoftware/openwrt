@@ -124,7 +124,7 @@ uci batch <<EOF
 delete firewall.zone_languest
 set firewall.zone_languest=zone
 set firewall.zone_languest.name='languest'
-set firewall.zone_languest.input='ACCEPT'
+set firewall.zone_languest.input='REJECT'
 set firewall.zone_languest.forward='REJECT'
 set firewall.zone_languest.output='ACCEPT'
 set firewall.zone_languest.network='languest'

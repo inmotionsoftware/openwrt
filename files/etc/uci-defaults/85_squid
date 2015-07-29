@@ -71,18 +71,6 @@ set firewall.rule_mainweb_lan_accept.proto='tcp'
 EOF
 uci commit firewall
 
-# Reject from all
-uci batch <<EOF
-delete firewall.rule_mainweb_all_reject
-set firewall.rule_mainweb_all_reject=rule
-set firewall.rule_mainweb_all_reject.name='MainWeb: all reject'
-set firewall.rule_mainweb_all_reject.dest_port='8080 8443'
-set firewall.rule_mainweb_all_reject.target='REJECT'
-set firewall.rule_mainweb_all_reject.proto='tcp'
-EOF
-uci commit firewall
-
-
 #
 # Create the web server that serves up the proxy.pac/wpad.dat file for automatic proxy configuration
 #
@@ -106,18 +94,27 @@ set uhttpd.file_svr.ubus_prefix='/ubus'
 EOF
 uci commit uhttpd
 
-# Reject from 'wan'
+# Allow access to the wpad webserver from lan
 uci batch <<EOF
-delete firewall.rule_filesvr_wan_reject
-set firewall.rule_filesvr_wan_reject=rule
-set firewall.rule_filesvr_wan_reject.src='wan'
-set firewall.rule_filesvr_wan_reject.name='FileSvr: wan reject'
-set firewall.rule_filesvr_wan_reject.dest_port='80 443'
-set firewall.rule_filesvr_wan_reject.target='REJECT'
-set firewall.rule_filesvr_wan_reject.proto='tcp'
+delete firewall.rule_proxy_wpad_webserver_lan_accept
+set firewall.rule_proxy_wpad_webserver_lan_accept=rule
+set firewall.rule_proxy_wpad_webserver_lan_accept.name='Proxy: wpad webserver: lan accept'
+set firewall.rule_proxy_wpad_webserver_lan_accept.src='lan'
+set firewall.rule_proxy_wpad_webserver_lan_accept.dest_port='80 443'
+set firewall.rule_proxy_wpad_webserver_lan_accept.target='ACCEPT'
+set firewall.rule_proxy_wpad_webserver_lan_accept.proto='tcp'
 EOF
-uci commit firewall
 
+# Allow access to the wpad webserver from languest
+uci batch <<EOF
+delete firewall.rule_proxy_wpad_webserver_languest_accept
+set firewall.rule_proxy_wpad_webserver_languest_accept=rule
+set firewall.rule_proxy_wpad_webserver_languest_accept.name='Proxy: wpad webserver: languest accept'
+set firewall.rule_proxy_wpad_webserver_languest_accept.src='languest'
+set firewall.rule_proxy_wpad_webserver_languest_accept.dest_port='80 443'
+set firewall.rule_proxy_wpad_webserver_languest_accept.target='ACCEPT'
+set firewall.rule_proxy_wpad_webserver_languest_accept.proto='tcp'
+EOF
 
 # Allow access to the proxy server from lan
 uci batch <<EOF
