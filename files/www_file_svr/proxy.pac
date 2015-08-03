@@ -32,8 +32,8 @@ function FindProxyForURL(url, host)
     }
 
 //    // Use the proxy.  If that fails then go direct
-//  return "PROXY 192.168.4.1:3128; DIRECT";
+//  return "PROXY 192.168.8.1:3128; DIRECT";
 
     // Use the proxy
-    return "PROXY 192.168.4.1:3128";
+    return "PROXY 192.168.8.1:3128";
 }
