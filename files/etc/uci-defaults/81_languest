@@ -70,7 +70,7 @@ set wireless.@wifi-iface[0].network='lan'
 set wireless.@wifi-iface[0].mode='ap'
 set wireless.@wifi-iface[0].ssid='REEF-${device_id}-Instr-Ch1'
 set wireless.@wifi-iface[0].encryption='psk'
-set wireless.@wifi-iface[0].key='treehouse'
+set wireless.@wifi-iface[0].key='macmillaninstructor'
 EOF
 
 # radio1 - lan
@@ -81,7 +81,7 @@ set wireless.@wifi-iface[1].network='lan'
 set wireless.@wifi-iface[1].mode='ap'
 set wireless.@wifi-iface[1].ssid='REEF-${device_id}-Instr-Ch2'
 set wireless.@wifi-iface[1].encryption='psk'
-set wireless.@wifi-iface[1].key='treehouse'
+set wireless.@wifi-iface[1].key='macmillaninstructor'
 EOF
 
 # radio0 - languest
@@ -92,7 +92,7 @@ set wireless.@wifi-iface[-1].network='languest'
 set wireless.@wifi-iface[-1].mode='ap'
 set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Stdnt-Ch1'
 set wireless.@wifi-iface[-1].encryption='psk'
-set wireless.@wifi-iface[-1].key='treehouse'
+set wireless.@wifi-iface[-1].key='reefstudent'
 EOF
 
 # radio - languest
@@ -103,7 +103,7 @@ set wireless.@wifi-iface[-1].network='languest'
 set wireless.@wifi-iface[-1].mode='ap'
 set wireless.@wifi-iface[-1].ssid='REEF-${device_id}-Stdnt-Ch2'
 set wireless.@wifi-iface[-1].encryption='psk'
-set wireless.@wifi-iface[-1].key='treehouse'
+set wireless.@wifi-iface[-1].key='reefstudent'
 EOF
 
 uci commit wireless
