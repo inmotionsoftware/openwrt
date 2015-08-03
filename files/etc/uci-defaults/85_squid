@@ -8,13 +8,61 @@
 
 ###############################################################################
 #
-# inm_ucidef_squid_nontransparent()
+# inm_ucidef_squid_firewall_rules()
 #
-# Creates the HTTP server to serve up the proxy.pac file
+# Create the firewall rules for the specified 'src'
 #
 ###############################################################################
-inm_ucidef_squid_nontransparent() {
+inm_ucidef_squid_firewall_rules() {
+local src=$1
 
+# Allow access to the wpad webserver from ${src} to 'device'
+uci batch <<EOF
+delete firewall.rule_proxy_wpad_webserver_${src}_accept
+set firewall.rule_proxy_wpad_webserver_${src}_accept=rule
+set firewall.rule_proxy_wpad_webserver_${src}_accept.name='Proxy: wpad webserver: ${src} accept'
+set firewall.rule_proxy_wpad_webserver_${src}_accept.src='${src}'
+set firewall.rule_proxy_wpad_webserver_${src}_accept.dest_port='80 443'
+set firewall.rule_proxy_wpad_webserver_${src}_accept.target='ACCEPT'
+set firewall.rule_proxy_wpad_webserver_${src}_accept.proto='tcp'
+EOF
+
+# Allow access to the proxy server from ${src} to 'device'
+uci batch <<EOF
+delete firewall.rule_proxy_${src}_accept
+set firewall.rule_proxy_${src}_accept=rule
+set firewall.rule_proxy_${src}_accept.name='Proxy: ${src} accept'
+set firewall.rule_proxy_${src}_accept.src='${src}'
+set firewall.rule_proxy_${src}_accept.dest_port='3128'
+set firewall.rule_proxy_${src}_accept.target='ACCEPT'
+set firewall.rule_proxy_${src}_accept.proto='tcp'
+EOF
+
+# Create firewall rules to block access to everything from ${src} to WAN
+uci batch <<EOF
+delete firewall.rule_proxy_${src}_to_wan_all_reject
+set firewall.rule_proxy_${src}_to_wan_all_reject=rule
+set firewall.rule_proxy_${src}_to_wan_all_reject.src='${src}'
+set firewall.rule_proxy_${src}_to_wan_all_reject.dest='wan'
+set firewall.rule_proxy_${src}_to_wan_all_reject.name='Proxy: ${src} to wan all reject'
+set firewall.rule_proxy_${src}_to_wan_all_reject.target='REJECT'
+set firewall.rule_proxy_${src}_to_wan_all_reject.proto='all'
+EOF
+
+uci commit firewall
+}
+
+
+###############################################################################
+#
+# Main entry point
+#
+###############################################################################
+
+uci batch <<EOF
+set squid.squid.visible_hostname='reefaccess'
+EOF
+uci commit squid
 
 #
 # Create an alias so that clients can find the proxy wpad.dat file so that they can auto configure themselves
@@ -23,7 +71,8 @@ uci batch <<EOF
 delete dhcp.domain_lan_wpad
 set dhcp.domain_lan_wpad=domain
 set dhcp.domain_lan_wpad.name='wpad'
-set dhcp.domain_lan_wpad.ip='192.168.4.1'
+#set dhcp.domain_lan_wpad.ip='192.168.4.1'
+set dhcp.domain_lan_wpad.ip='192.168.8.1'
 EOF
 uci commit dhcp
 
@@ -32,7 +81,7 @@ uci commit dhcp
 # Create the DHCP options
 #
 uci batch <<EOF
-set dhcp.lan.dhcp_option='252,http://reefaccess/wpad.dat'
+#set dhcp.lan.dhcp_option='252,http://reefaccess/wpad.dat'
 set dhcp.languest.dhcp_option='252,http://reefaccess/wpad.dat'
 EOF
 uci commit dhcp
@@ -94,71 +143,27 @@ set uhttpd.file_svr.ubus_prefix='/ubus'
 EOF
 uci commit uhttpd
 
-# Allow access to the wpad webserver from lan
-uci batch <<EOF
-delete firewall.rule_proxy_wpad_webserver_lan_accept
-set firewall.rule_proxy_wpad_webserver_lan_accept=rule
-set firewall.rule_proxy_wpad_webserver_lan_accept.name='Proxy: wpad webserver: lan accept'
-set firewall.rule_proxy_wpad_webserver_lan_accept.src='lan'
-set firewall.rule_proxy_wpad_webserver_lan_accept.dest_port='80 443'
-set firewall.rule_proxy_wpad_webserver_lan_accept.target='ACCEPT'
-set firewall.rule_proxy_wpad_webserver_lan_accept.proto='tcp'
-EOF
-
-# Allow access to the wpad webserver from languest
-uci batch <<EOF
-delete firewall.rule_proxy_wpad_webserver_languest_accept
-set firewall.rule_proxy_wpad_webserver_languest_accept=rule
-set firewall.rule_proxy_wpad_webserver_languest_accept.name='Proxy: wpad webserver: languest accept'
-set firewall.rule_proxy_wpad_webserver_languest_accept.src='languest'
-set firewall.rule_proxy_wpad_webserver_languest_accept.dest_port='80 443'
-set firewall.rule_proxy_wpad_webserver_languest_accept.target='ACCEPT'
-set firewall.rule_proxy_wpad_webserver_languest_accept.proto='tcp'
-EOF
-
-# Allow access to the proxy server from lan
-uci batch <<EOF
-delete firewall.rule_proxy_lan_accept
-set firewall.rule_proxy_lan_accept=rule
-set firewall.rule_proxy_lan_accept.name='Proxy: lan accept'
-set firewall.rule_proxy_lan_accept.src='lan'
-set firewall.rule_proxy_lan_accept.dest_port='3128'
-set firewall.rule_proxy_lan_accept.target='ACCEPT'
-set firewall.rule_proxy_lan_accept.proto='tcp'
-EOF
-
-# Allow access to the proxy server from languest
-uci batch <<EOF
-delete firewall.rule_proxy_languest_accept
-set firewall.rule_proxy_languest_accept=rule
-set firewall.rule_proxy_languest_accept.name='Proxy: languest accept'
-set firewall.rule_proxy_languest_accept.src='languest'
-set firewall.rule_proxy_languest_accept.dest_port='3128'
-set firewall.rule_proxy_languest_accept.target='ACCEPT'
-set firewall.rule_proxy_languest_accept.proto='tcp'
-EOF
-
-#
-# WORKAROUND: Due to WebSockets not going through the proxy...
-# Create firewall rules to allow access to normal HTTP and HTTPS from lan or languest to WAN
-# targeting .reef-education.com
-#
-# api-dev.reef-education.com    107.20.8.157
-# api-qa.reef-education.com     54.237.128.85
-# api-beta.reef-education.com   54.229.9.24
-# api.reef-education.com        54.72.117.52
-#
-uci batch <<EOF
-delete firewall.rule_proxy_lan_to_wan_web_reef
-set firewall.rule_proxy_lan_to_wan_web_reef=rule
-set firewall.rule_proxy_lan_to_wan_web_reef.src='lan'
-set firewall.rule_proxy_lan_to_wan_web_reef.dest='wan'
-set firewall.rule_proxy_lan_to_wan_web_reef.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
-set firewall.rule_proxy_lan_to_wan_web_reef.name='Proxy: lan to wan web .reef-education.com accept'
-set firewall.rule_proxy_lan_to_wan_web_reef.dest_port='80 443'
-set firewall.rule_proxy_lan_to_wan_web_reef.target='ACCEPT'
-set firewall.rule_proxy_lan_to_wan_web_reef.proto='tcp'
-EOF
+##
+## WORKAROUND: Due to WebSockets not going through the proxy...
+## Create firewall rules to allow access to normal HTTP and HTTPS from lan or languest to WAN
+## targeting .reef-education.com
+##
+## api-dev.reef-education.com    107.20.8.157
+## api-qa.reef-education.com     54.237.128.85
+## api-beta.reef-education.com   54.229.9.24
+## api.reef-education.com        54.72.117.52
+##
+#uci batch <<EOF
+#delete firewall.rule_proxy_lan_to_wan_web_reef
+#set firewall.rule_proxy_lan_to_wan_web_reef=rule
+#set firewall.rule_proxy_lan_to_wan_web_reef.src='lan'
+#set firewall.rule_proxy_lan_to_wan_web_reef.dest='wan'
+#set firewall.rule_proxy_lan_to_wan_web_reef.dest_ip='107.20.8.157 54.237.128.85 54.229.9.24 54.72.117.52'
+#set firewall.rule_proxy_lan_to_wan_web_reef.name='Proxy: lan to wan web .reef-education.com accept'
+#set firewall.rule_proxy_lan_to_wan_web_reef.dest_port='80 443'
+#set firewall.rule_proxy_lan_to_wan_web_reef.target='ACCEPT'
+#set firewall.rule_proxy_lan_to_wan_web_reef.proto='tcp'
+#EOF
 
 uci batch <<EOF
 delete firewall.rule_proxy_languest_to_wan_web_reef
@@ -172,74 +177,8 @@ set firewall.rule_proxy_languest_to_wan_web_reef.target='ACCEPT'
 set firewall.rule_proxy_languest_to_wan_web_reef.proto='tcp'
 EOF
 
-
-#
-# Create firewall rules to block access to normal HTTP and HTTPS from lan or languest to WAN
-#
-uci batch <<EOF
-delete firewall.rule_proxy_lan_to_wan_web
-set firewall.rule_proxy_lan_to_wan_web=rule
-set firewall.rule_proxy_lan_to_wan_web.src='lan'
-set firewall.rule_proxy_lan_to_wan_web.dest='wan'
-set firewall.rule_proxy_lan_to_wan_web.name='Proxy: lan to wan web reject'
-set firewall.rule_proxy_lan_to_wan_web.dest_port='80 443'
-set firewall.rule_proxy_lan_to_wan_web.target='REJECT'
-set firewall.rule_proxy_lan_to_wan_web.proto='tcp'
-EOF
-
-uci batch <<EOF
-delete firewall.rule_proxy_languest_to_wan_web
-set firewall.rule_proxy_languest_to_wan_web=rule
-set firewall.rule_proxy_languest_to_wan_web.src='languest'
-set firewall.rule_proxy_languest_to_wan_web.dest='wan'
-set firewall.rule_proxy_languest_to_wan_web.name='Proxy: languest to wan web reject'
-set firewall.rule_proxy_languest_to_wan_web.dest_port='80 443'
-set firewall.rule_proxy_languest_to_wan_web.target='REJECT'
-set firewall.rule_proxy_languest_to_wan_web.proto='tcp'
-EOF
-
-#
-# Create firewall rules to block access to normal QUIC (Quick UDP Internet Connections) from lan or languest to WAN
-#
-uci batch <<EOF
-delete firewall.rule_proxy_lan_to_wan_quic
-set firewall.rule_proxy_lan_to_wan_quic=rule
-set firewall.rule_proxy_lan_to_wan_quic.src='lan'
-set firewall.rule_proxy_lan_to_wan_quic.dest='wan'
-set firewall.rule_proxy_lan_to_wan_quic.name='Proxy: lan to wan quic reject'
-set firewall.rule_proxy_lan_to_wan_quic.dest_port='443'
-set firewall.rule_proxy_lan_to_wan_quic.target='REJECT'
-set firewall.rule_proxy_lan_to_wan_quic.proto='udp'
-EOF
-
-uci batch <<EOF
-delete firewall.rule_proxy_languest_to_wan_quic
-set firewall.rule_proxy_languest_to_wan_quic=rule
-set firewall.rule_proxy_languest_to_wan_quic.src='languest'
-set firewall.rule_proxy_languest_to_wan_quic.dest='wan'
-set firewall.rule_proxy_languest_to_wan_quic.name='Proxy: languest to wan quic reject'
-set firewall.rule_proxy_languest_to_wan_quic.dest_port='443'
-set firewall.rule_proxy_languest_to_wan_quic.target='REJECT'
-set firewall.rule_proxy_languest_to_wan_quic.proto='udp'
-EOF
-
-
-uci commit firewall
-}
-
-
-###############################################################################
-#
-# Main entry point
-#
-###############################################################################
-
-uci batch <<EOF
-set squid.squid.visible_hostname='reefaccess'
-EOF
-uci commit squid
-
-# Set the "squid" nontransparent proxy settings
-inm_ucidef_squid_nontransparent
+# Setup the firewall rules for the specified 'src'
+#inm_ucidef_squid_firewall_rules lan
+inm_ucidef_squid_firewall_rules languest
 
 exit 0
