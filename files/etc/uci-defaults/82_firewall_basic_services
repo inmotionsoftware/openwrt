@@ -114,6 +114,18 @@ set firewall.rule_${src}_telnet_accept.proto='tcp'
 set firewall.rule_${src}_telnet_accept.target='ACCEPT'
 EOF
 
+# Allow REEF Gateway
+uci batch <<EOF
+delete firewall.rule_${src}_reefgateway_accept
+set firewall.rule_${src}_reefgateway_accept=rule
+set firewall.rule_${src}_reefgateway_accept.name='${src}: reefgateway accept'
+set firewall.rule_${src}_reefgateway_accept.enabled='1'
+set firewall.rule_${src}_reefgateway_accept.src='${src}'
+set firewall.rule_${src}_reefgateway_accept.dest_port='9123'
+set firewall.rule_${src}_reefgateway_accept.proto='tcp'
+set firewall.rule_${src}_reefgateway_accept.target='ACCEPT'
+EOF
+
 uci commit firewall
 }
 
