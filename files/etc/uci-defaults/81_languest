@@ -5,8 +5,8 @@
 
 . /lib/functions/uci-defaults.sh
 
-# Use the last 3 bytes of the mac address for use in SSID naming
-device_id=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g | head -c -7)
+# Use the last 3 segments of the mac address for use in SSID naming
+device_id=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g | tail --bytes=7)
 # Use random number for use in SSID naming
 #device_id=$(head /dev/urandom | tr -dc "123456789" | head -c4)
 
