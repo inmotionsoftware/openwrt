@@ -5,9 +5,12 @@
 
 . /lib/functions/uci-defaults.sh
 
+# Use the last 3 segments of the mac address for use in SSID naming
+device_id=$(ifconfig eth0 | awk '/HWaddr/ { print $5 }' | sed s/://g | tail -c 7)
+
 # Set the hostname for the gateway
 uci batch <<EOF
-set system.@system[0].hostname='reefaccess'
+set system.@system[0].hostname='reefaccess-${device_id}'
 EOF
 uci commit system
 
